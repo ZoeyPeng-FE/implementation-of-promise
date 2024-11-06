@@ -2,11 +2,11 @@
  * @Author: pengyue
  * @Date: 2024-11-05 20:29:50
  * @LastEditors: pengyue
- * @LastEditTime: 2024-11-06 15:21:01
+ * @LastEditTime: 2024-11-07 00:25:38
  * @Description: 
  */
 // const promisesAplusTests = require("promises-aplus-tests");
-const myPromise = require("../myPromiseA+.js");
+const myPromise = require("../myPromiseA+");
 
 // promisesAplusTests(adapter, function (err) {
 //     // All done; output is in the console. Or check `err` for number of failures.
