@@ -1,0 +1,17 @@
+{
+  "name": "my-promise",
+  "version": "1.0.0",
+  "description": "a promise implementation with the Promises/A+ specification",
+  "main": "myPromise.js",
+  "scripts": {
+    "test": "promises-aplus-tests test/myPromiseTest"
+  },
+  "keywords": [
+    "promise/A+"
+  ],
+  "author": "pengy",
+  "license": "ISC",
+  "dependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  }
+}
