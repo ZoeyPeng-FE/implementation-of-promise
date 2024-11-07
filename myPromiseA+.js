@@ -4,6 +4,7 @@
  * 2、异步调用回调函数（若 then 调用时，promise 内部还处于 pending 状态，就将回调函数推入数组存放，待异步代码执行完后，执行 resolve 或 reject 改变状态后，再执行数组中的函数）
  * 3、then 方法链式调用（then 方法也返回一个 promise 对象，准确说是 thenable 对象，即包含 then 方法的对象）
  * 4、处理 promise 回调函数返回的结果是一个 promise 对象的情况
+ * 5、catch 方法、静态 resolve 方法、静态 reject 方法
 */
 class MyPromise {
   static PENDING = 'pending'
@@ -69,11 +70,11 @@ class MyPromise {
             if (this.promiseState === MyPromise.FULFILLED) {
               const x = onFullfilled(this.result)
               // 2.2.7.1 If either onFulfilled or onRejected returns a value x, run the Promise Resolution Procedure [[Resolve]](promise2, x).
-              resolvePromise(promise2, x, resolve, reject)
+              resolutionProcedure(promise2, x, resolve, reject)
             } else {
               const x = onRejected(this.result)
               // 2.2.7.1 If either onFulfilled or onRejected returns a value x, run the Promise Resolution Procedure [[Resolve]](promise2, x).
-              resolvePromise(promise2, x, resolve, reject)
+              resolutionProcedure(promise2, x, resolve, reject)
             }
           } catch (e) {
             // 2.2.7.2 If either onFulfilled or onRejected throws an exception e, promise2 must be rejected with e as the reason
@@ -92,16 +93,34 @@ class MyPromise {
     
     return promise2 // 2.2.7 then must return a promise. promise2 = promise1.then(onFulfilled, onRejected);
   }
+
+  // catch function is a then function with another name，specially for the rejected callback
+  // catch 方法是 then 方法的别名，用于指定发生错误时的回调函数
+  catch(onRejected) {
+    return this.then(undefined, onRejected)
+  }
+
+  // static resolve function
+  static resolve(value) {
+    // return a function 
+    return new MyPromise((resolve, reject) => resolutionProcedure(undefined, value, resolve, resolve))
+  }
+
+  // static reject function
+  static reject(value) {
+    return new MyPromise((resolve, reject) => resolutionProcedure(undefined, value, reject, reject))
+  }
+
 }
 
 /**
- * 为了解决 promise 回调函数返回的结果是一个 promise 对象的情况，引入一个 resolvePromise 函数
+ * 为了解决 promise 回调函数返回的结果是一个 promise 对象的情况，引入一个 resolutionProcedure 函数
  * promise2：上一个 promise 的 then 函数返回的 promise 函数
  * x: 上一个 promise 的回调函数执行后的返回值
  * resolve：promise2的resolve
  * reject：promise2的reject
  */
-function resolvePromise(promise2, x, resolve, reject) {
+function resolutionProcedure(promise2, x, resolve, reject) {
   // 2.3.1 If promise and x refer to the same object, reject promise with a TypeError as the reason.
   if (promise2 === x) {
     reject(new TypeError('Chaining cycle'))
@@ -110,7 +129,7 @@ function resolvePromise(promise2, x, resolve, reject) {
   // 如果 x 是 promise 类型，执行 x 后调用 then 函数，并将 promise2、新的返回值 r，promise2 的 resolve、promise2 的 reject 递归传下去
   // 2.3.2 If x is a promise, adopt its state
   if (x && x instanceof MyPromise) {
-    x.then(r => resolvePromise(promise2, r, resolve, reject), r => reject(r))
+    x.then(r => resolutionProcedure(promise2, r, resolve, reject), r => reject(r))
   } else if (x && typeof x === 'object' || typeof x === 'function') { // 2.3.3 Otherwise, if x is an object or function,
       // 2.3.3.3.3 If both resolvePromise and rejectPromise are called, or multiple calls to the same argument are made, the first call takes precedence, and any further calls are ignored.
       let resolveOrRejectIsCalled = false // 用于控制 resolve / reject 只能执行其中一个
@@ -121,7 +140,7 @@ function resolvePromise(promise2, x, resolve, reject) {
           // 2.3.3.3.1 If/when resolvePromise is called with a value y, run [[Resolve]](promise, y).
           then.call(x, r => {
             if (!resolveOrRejectIsCalled) {
-              resolvePromise(promise2, r, resolve, reject)
+              resolutionProcedure(promise2, r, resolve, reject)
               resolveOrRejectIsCalled = true
             }
           }, r => {

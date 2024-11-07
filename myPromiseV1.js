@@ -54,9 +54,12 @@ class MyPromise {
       // 1、如果promise1状态是pending，则等待promise1被resolved或rejected时执行scheduleFn()
       // 2、否则立即执行scheduleFn()。
       const scheduleFn = () => {
-        // Promise/A+ 规范规定，then方法的回调函数必须异步执行，使用setTimeout()
+        // Promise/A+ 规范规定，then方法的回调函数必须异步执行，使用 setTimeout() 实现
+        // 2.2.4 onFulfilled or onRejected must not be called until the execution context stack contains only platform code.
         setTimeout(() => {
+          //2.2.7.3 If onFulfilled is not a function and promise1 is fulfilled, promise2 must be fulfilled with the same value as promise1
           onFullfilled = typeof onFullfilled === 'function'? onFullfilled : value => value
+          //2.2.7.4 If onRejected is not a function and promise1 is rejected, promise2 must be rejected with the same reason as promise1
           onRejected = typeof onRejected === 'function'? onRejected : reason => { throw reason }
           try {
             // 将 promise1 回调函数的执行结果作为参数传递给 promise2
